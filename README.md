@@ -50,11 +50,11 @@ El proyecto utiliza las siguientes tecnologías:
 1. Tener Docker instalado y funcionando.
 2. Construye la imagen Docker ejecutando el siguiente comando en la raíz del proyecto:
    ```bash
-   docker build -t crud-spaceships .
+   docker build -t spaceships .
     ```
 3. Ejecuta el contenedor Docker con el siguiente comando:
     ```bash
-    docker run -p 8080:8080 crud-spaceships
+    docker run -p 8080:8080 spaceships
     ```
 4. Accede a la documentación de la API desde `http://localhost:8080/swagger-ui/index.html`.
 5. Para detener el contenedor, ejecuta el siguiente comando:
