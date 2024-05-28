@@ -1,7 +1,11 @@
 package com.emaflores.spaceships.exception;
 
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.InjectMocks;
 import org.mockito.MockitoAnnotations;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -10,12 +14,11 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
-import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
-
 
 import java.util.Collections;
 import java.util.Map;
+import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.mock;
@@ -68,48 +71,25 @@ public class GlobalExceptionHandlerTest {
         assertEquals("must not be blank", response.getBody().get("name"));
     }
 
-    @Test
-    public void testHandleDataIntegrityViolationExceptionNameField() {
-        Throwable rootCause = new Throwable("La columna \"NAME\" no permite valores nulos");
+    @ParameterizedTest
+    @MethodSource("provideTestArguments")
+    @DisplayName("Test handleDataIntegrityViolationException with different field messages")
+    public void testHandleDataIntegrityViolationException(String columnName, String expectedMessage) {
+        Throwable rootCause = new Throwable("La columna \"" + columnName + "\" no permite valores nulos");
         DataIntegrityViolationException ex = new DataIntegrityViolationException("Data integrity violation", rootCause);
 
         ResponseEntity<ErrorResponse> response = exceptionHandler.handleDataIntegrityViolationException(ex);
 
         assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
-        assertEquals("The name field cannot be null. Please provide a valid name.", response.getBody().getMessage());
+        assertEquals(expectedMessage, response.getBody().getMessage());
     }
 
-    @Test
-    public void testHandleDataIntegrityViolationExceptionTypeField() {
-        Throwable rootCause = new Throwable("La columna \"TYPE\" no permite valores nulos");
-        DataIntegrityViolationException ex = new DataIntegrityViolationException("Data integrity violation", rootCause);
-
-        ResponseEntity<ErrorResponse> response = exceptionHandler.handleDataIntegrityViolationException(ex);
-
-        assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
-        assertEquals("The type field cannot be null. Please provide a valid type.", response.getBody().getMessage());
-    }
-
-    @Test
-    public void testHandleDataIntegrityViolationExceptionSourceField() {
-        Throwable rootCause = new Throwable("La columna \"SOURCE\" no permite valores nulos");
-        DataIntegrityViolationException ex = new DataIntegrityViolationException("Data integrity violation", rootCause);
-
-        ResponseEntity<ErrorResponse> response = exceptionHandler.handleDataIntegrityViolationException(ex);
-
-        assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
-        assertEquals("The source field cannot be null. Please provide a valid source.", response.getBody().getMessage());
-    }
-
-    @Test
-    public void testHandleDataIntegrityViolationExceptionGeneric() {
-        Throwable rootCause = new Throwable("Some generic data integrity violation");
-        DataIntegrityViolationException ex = new DataIntegrityViolationException("Data integrity violation", rootCause);
-
-        ResponseEntity<ErrorResponse> response = exceptionHandler.handleDataIntegrityViolationException(ex);
-
-        assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
-        assertEquals("Data integrity violation: Some generic data integrity violation", response.getBody().getMessage());
+    private static Stream<Arguments> provideTestArguments() {
+        return Stream.of(
+                Arguments.of("NAME", "The name field cannot be null. Please provide a valid name."),
+                Arguments.of("TYPE", "The type field cannot be null. Please provide a valid type."),
+                Arguments.of("SOURCE", "The source field cannot be null. Please provide a valid source.")
+        );
     }
 
     @Test
