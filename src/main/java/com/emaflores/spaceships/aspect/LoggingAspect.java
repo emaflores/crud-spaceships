@@ -17,10 +17,10 @@ public class LoggingAspect {
         try {
             Long spaceshipId = Long.parseLong(id);
             if (spaceshipId < 0) {
-                logger.warn("Attempted to find spaceship with negative ID: " + spaceshipId);
+                logger.warn("Attempted to find spaceship with negative ID: {}", spaceshipId);
             }
         } catch (NumberFormatException e) {
-            logger.warn("Invalid ID format: " + id);
+            logger.warn("Invalid ID format: {}", id);
         }
     }
 }
