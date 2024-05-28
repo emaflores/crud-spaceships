@@ -20,7 +20,7 @@ import java.util.Optional;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
-public class SpaceshipServiceTest {
+class SpaceshipServiceTest {
 
     @InjectMocks
     private SpaceshipService service;
@@ -34,7 +34,7 @@ public class SpaceshipServiceTest {
     }
 
     @Test
-    public void testFindAll() {
+    void testFindAll() {
         Pageable pageable = PageRequest.of(0, 10);
         Spaceship spaceship = new Spaceship();
         spaceship.setName("Enterprise");
@@ -51,7 +51,7 @@ public class SpaceshipServiceTest {
     }
 
     @Test
-    public void testFindById() {
+    void testFindById() {
         Spaceship spaceship = new Spaceship();
         spaceship.setId(1L);
         spaceship.setName("Enterprise");
@@ -65,7 +65,7 @@ public class SpaceshipServiceTest {
     }
 
     @Test
-    public void testFindByIdNotFound() {
+    void testFindByIdNotFound() {
         when(repository.findById(1L)).thenReturn(Optional.empty());
 
         Optional<Spaceship> result = service.findById(1L);
@@ -74,7 +74,7 @@ public class SpaceshipServiceTest {
     }
 
     @Test
-    public void testFindByName() {
+    void testFindByName() {
         Spaceship spaceship = new Spaceship();
         spaceship.setName("Enterprise");
         List<Spaceship> spaceshipList = Arrays.asList(spaceship);
@@ -89,11 +89,12 @@ public class SpaceshipServiceTest {
     }
 
     @Test
-    public void testSave() {
+    void testSave() {
         Spaceship spaceship = new Spaceship();
+        spaceship.setId(1L);
         spaceship.setName("Enterprise");
 
-        when(repository.existsByName("Enterprise")).thenReturn(false);
+        when(repository.findByNameContainingIgnoreCase("Enterprise")).thenReturn(Arrays.asList());
         when(repository.save(spaceship)).thenReturn(spaceship);
 
         Spaceship result = service.save(spaceship);
@@ -103,11 +104,16 @@ public class SpaceshipServiceTest {
     }
 
     @Test
-    public void testSaveDuplicate() {
+    void testSaveDuplicate() {
         Spaceship spaceship = new Spaceship();
+        spaceship.setId(2L); // Different ID to simulate another existing spaceship
         spaceship.setName("Enterprise");
 
-        when(repository.existsByName("Enterprise")).thenReturn(true);
+        Spaceship existingSpaceship = new Spaceship();
+        existingSpaceship.setId(1L);
+        existingSpaceship.setName("Enterprise");
+
+        when(repository.findByNameContainingIgnoreCase("Enterprise")).thenReturn(Arrays.asList(existingSpaceship));
 
         assertThrows(DuplicateSpaceshipException.class, () -> {
             service.save(spaceship);
@@ -115,7 +121,26 @@ public class SpaceshipServiceTest {
     }
 
     @Test
-    public void testDeleteById() {
+    void testSaveDuplicateSameId() {
+        Spaceship spaceship = new Spaceship();
+        spaceship.setId(1L);
+        spaceship.setName("Enterprise");
+
+        Spaceship existingSpaceship = new Spaceship();
+        existingSpaceship.setId(1L);
+        existingSpaceship.setName("Enterprise");
+
+        when(repository.findByNameContainingIgnoreCase("Enterprise")).thenReturn(Arrays.asList(existingSpaceship));
+        when(repository.save(spaceship)).thenReturn(spaceship);
+
+        Spaceship result = service.save(spaceship);
+
+        assertNotNull(result);
+        assertEquals("Enterprise", result.getName());
+    }
+
+    @Test
+    void testDeleteById() {
         doNothing().when(repository).deleteById(1L);
 
         service.deleteById(1L);

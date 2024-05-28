@@ -24,7 +24,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-public class GlobalExceptionHandlerTest {
+class GlobalExceptionHandlerTest {
 
     @InjectMocks
     private GlobalExceptionHandler exceptionHandler;
@@ -35,7 +35,7 @@ public class GlobalExceptionHandlerTest {
     }
 
     @Test
-    public void testHandleDuplicateSpaceshipException() {
+    void testHandleDuplicateSpaceshipException() {
         DuplicateSpaceshipException ex = new DuplicateSpaceshipException("Duplicate spaceship");
         ResponseEntity<ErrorResponse> response = exceptionHandler.handleDuplicateSpaceshipException(ex);
         assertEquals(HttpStatus.CONFLICT, response.getStatusCode());
@@ -43,7 +43,7 @@ public class GlobalExceptionHandlerTest {
     }
 
     @Test
-    public void testHandleInvalidIdException() {
+    void testHandleInvalidIdException() {
         InvalidIdException ex = new InvalidIdException("Invalid ID");
         ResponseEntity<ErrorResponse> response = exceptionHandler.handleInvalidIdException(ex);
         assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
@@ -51,7 +51,7 @@ public class GlobalExceptionHandlerTest {
     }
 
     @Test
-    public void testHandleNoResourceFoundException() {
+    void testHandleNoResourceFoundException() {
         NoResourceFoundException ex = mock(NoResourceFoundException.class);
         ResponseEntity<ErrorResponse> response = exceptionHandler.handleNoResourceFoundException(ex);
         assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
@@ -59,7 +59,7 @@ public class GlobalExceptionHandlerTest {
     }
 
     @Test
-    public void testHandleValidationExceptions() {
+    void testHandleValidationExceptions() {
         BindingResult bindingResult = mock(BindingResult.class);
         MethodArgumentNotValidException ex = new MethodArgumentNotValidException(null, bindingResult);
 
@@ -74,7 +74,7 @@ public class GlobalExceptionHandlerTest {
     @ParameterizedTest
     @MethodSource("provideTestArguments")
     @DisplayName("Test handleDataIntegrityViolationException with different field messages")
-    public void testHandleDataIntegrityViolationException(String columnName, String expectedMessage) {
+    void testHandleDataIntegrityViolationException(String columnName, String expectedMessage) {
         Throwable rootCause = new Throwable("La columna \"" + columnName + "\" no permite valores nulos");
         DataIntegrityViolationException ex = new DataIntegrityViolationException("Data integrity violation", rootCause);
 
@@ -93,7 +93,7 @@ public class GlobalExceptionHandlerTest {
     }
 
     @Test
-    public void testHandleGenericException() {
+    void testHandleGenericException() {
         Exception ex = new Exception("Generic error");
         ResponseEntity<ErrorResponse> response = exceptionHandler.handleGenericException(ex);
         assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, response.getStatusCode());

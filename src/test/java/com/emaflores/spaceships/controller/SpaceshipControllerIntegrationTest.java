@@ -11,12 +11,14 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
 
+import java.util.Base64;
+
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 
 @SpringBootTest
 @AutoConfigureMockMvc
-public class SpaceshipControllerIntegrationTest {
+class SpaceshipControllerIntegrationTest {
 
     @Autowired
     private MockMvc mockMvc;
@@ -24,13 +26,16 @@ public class SpaceshipControllerIntegrationTest {
     @Autowired
     private SpaceshipRepository repository;
 
+    private String basicAuthHeader;
+
     @BeforeEach
     public void setUp() {
         repository.deleteAll();
+        basicAuthHeader = "Basic " + Base64.getEncoder().encodeToString("user:password".getBytes());
     }
 
     @Test
-    public void testGetAllSpaceships() throws Exception {
+    void testGetAllSpaceships() throws Exception {
         Spaceship spaceship = new Spaceship();
         spaceship.setName("Enterprise");
         spaceship.setType("Explorer");
@@ -38,14 +43,15 @@ public class SpaceshipControllerIntegrationTest {
         repository.save(spaceship);
 
         mockMvc.perform(get("/api/spaceships")
+                        .header("Authorization", basicAuthHeader)
                         .contentType(MediaType.APPLICATION_JSON))
                 .andDo(print())
                 .andExpect(MockMvcResultMatchers.status().isOk())
-                .andExpect(MockMvcResultMatchers.jsonPath("$.content[0].name").value("Enterprise"));
+                .andExpect(MockMvcResultMatchers.jsonPath("$._embedded.spaceshipList[0].name").value("Enterprise"));
     }
 
     @Test
-    public void testGetSpaceshipById() throws Exception {
+    void testGetSpaceshipById() throws Exception {
         Spaceship spaceship = new Spaceship();
         spaceship.setName("Enterprise");
         spaceship.setType("Explorer");
@@ -53,6 +59,7 @@ public class SpaceshipControllerIntegrationTest {
         spaceship = repository.save(spaceship);
 
         mockMvc.perform(get("/api/spaceships/" + spaceship.getId())
+                        .header("Authorization", basicAuthHeader)
                         .contentType(MediaType.APPLICATION_JSON))
                 .andDo(print())
                 .andExpect(MockMvcResultMatchers.status().isOk())
@@ -60,10 +67,11 @@ public class SpaceshipControllerIntegrationTest {
     }
 
     @Test
-    public void testCreateSpaceship() throws Exception {
+    void testCreateSpaceship() throws Exception {
         String spaceshipJson = "{\"name\":\"Enterprise\",\"type\":\"Explorer\",\"source\":\"Earth\"}";
 
         mockMvc.perform(post("/api/spaceships")
+                        .header("Authorization", basicAuthHeader)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(spaceshipJson))
                 .andDo(print())
@@ -72,7 +80,7 @@ public class SpaceshipControllerIntegrationTest {
     }
 
     @Test
-    public void testCreateSpaceshipDuplicate() throws Exception {
+    void testCreateSpaceshipDuplicate() throws Exception {
         Spaceship spaceship = new Spaceship();
         spaceship.setName("Enterprise");
         spaceship.setType("Explorer");
@@ -82,6 +90,7 @@ public class SpaceshipControllerIntegrationTest {
         String spaceshipJson = "{\"name\":\"Enterprise\",\"type\":\"Explorer\",\"source\":\"Earth\"}";
 
         mockMvc.perform(post("/api/spaceships")
+                        .header("Authorization", basicAuthHeader)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(spaceshipJson))
                 .andDo(print())
@@ -89,7 +98,7 @@ public class SpaceshipControllerIntegrationTest {
     }
 
     @Test
-    public void testUpdateSpaceship() throws Exception {
+    void testUpdateSpaceship() throws Exception {
         Spaceship spaceship = new Spaceship();
         spaceship.setName("Enterprise");
         spaceship.setType("Explorer");
@@ -99,6 +108,7 @@ public class SpaceshipControllerIntegrationTest {
         String updatedSpaceshipJson = "{\"name\":\"Enterprise Updated\",\"type\":\"Explorer\",\"source\":\"Earth\"}";
 
         mockMvc.perform(put("/api/spaceships/" + spaceship.getId())
+                        .header("Authorization", basicAuthHeader)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(updatedSpaceshipJson))
                 .andDo(print())
@@ -107,10 +117,11 @@ public class SpaceshipControllerIntegrationTest {
     }
 
     @Test
-    public void testUpdateSpaceshipInvalidId() throws Exception {
+    void testUpdateSpaceshipInvalidId() throws Exception {
         String updatedSpaceshipJson = "{\"name\":\"Enterprise Updated\",\"type\":\"Explorer\",\"source\":\"Earth\"}";
 
         mockMvc.perform(put("/api/spaceships/abc")
+                        .header("Authorization", basicAuthHeader)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(updatedSpaceshipJson))
                 .andDo(print())
@@ -118,7 +129,7 @@ public class SpaceshipControllerIntegrationTest {
     }
 
     @Test
-    public void testDeleteSpaceship() throws Exception {
+    void testDeleteSpaceship() throws Exception {
         Spaceship spaceship = new Spaceship();
         spaceship.setName("Enterprise");
         spaceship.setType("Explorer");
@@ -126,21 +137,23 @@ public class SpaceshipControllerIntegrationTest {
         spaceship = repository.save(spaceship);
 
         mockMvc.perform(delete("/api/spaceships/" + spaceship.getId())
+                        .header("Authorization", basicAuthHeader)
                         .contentType(MediaType.APPLICATION_JSON))
                 .andDo(print())
                 .andExpect(MockMvcResultMatchers.status().isNoContent());
     }
 
     @Test
-    public void testDeleteSpaceshipNotFound() throws Exception {
+    void testDeleteSpaceshipNotFound() throws Exception {
         mockMvc.perform(delete("/api/spaceships/1")
+                        .header("Authorization", basicAuthHeader)
                         .contentType(MediaType.APPLICATION_JSON))
                 .andDo(print())
                 .andExpect(MockMvcResultMatchers.status().isNotFound());
     }
 
     @Test
-    public void testHandleDataIntegrityViolationException() throws Exception {
+    void testHandleDataIntegrityViolationException() throws Exception {
         Spaceship spaceship = new Spaceship();
         spaceship.setName("Enterprise");
         spaceship.setType("Explorer");
@@ -150,9 +163,18 @@ public class SpaceshipControllerIntegrationTest {
         String invalidSpaceshipJson = "{\"name\":null,\"type\":\"Explorer\",\"source\":\"Earth\"}";
 
         mockMvc.perform(post("/api/spaceships")
+                        .header("Authorization", basicAuthHeader)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(invalidSpaceshipJson))
                 .andDo(print())
                 .andExpect(MockMvcResultMatchers.status().isBadRequest());
+    }
+
+    @Test
+    void testSwaggerUIAccess() throws Exception {
+        mockMvc.perform(get("/swagger-ui/index.html")
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andDo(print())
+                .andExpect(MockMvcResultMatchers.status().isOk());
     }
 }

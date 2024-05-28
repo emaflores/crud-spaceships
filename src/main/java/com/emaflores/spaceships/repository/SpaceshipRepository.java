@@ -15,6 +15,5 @@ public interface SpaceshipRepository extends JpaRepository<Spaceship, Long> {
     @Query("SELECT s FROM Spaceship s WHERE LOWER(s.name) LIKE LOWER(CONCAT('%', :name, '%'))")
     List<Spaceship> findByNameContainingIgnoreCase(@Param("name") String name);
 
-    boolean existsByName(String name);
 }
 

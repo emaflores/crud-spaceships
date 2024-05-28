@@ -13,8 +13,11 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.hateoas.EntityModel;
+import org.springframework.hateoas.PagedModel;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.data.web.PagedResourcesAssembler;
 
 import java.util.Arrays;
 import java.util.List;
@@ -23,7 +26,7 @@ import java.util.Optional;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
-public class SpaceshipControllerTest {
+class SpaceshipControllerTest {
 
     @InjectMocks
     private SpaceshipController controller;
@@ -31,30 +34,41 @@ public class SpaceshipControllerTest {
     @Mock
     private SpaceshipService service;
 
+    @Mock
+    private PagedResourcesAssembler<Spaceship> pagedResourcesAssembler;
+
     @BeforeEach
     public void setUp() {
         MockitoAnnotations.openMocks(this);
     }
 
     @Test
-    public void testGetAllSpaceships() {
+    void testGetAllSpaceships() {
         Pageable pageable = PageRequest.of(0, 10);
         Spaceship spaceship = new Spaceship();
         spaceship.setName("Enterprise");
         List<Spaceship> spaceshipList = Arrays.asList(spaceship);
         Page<Spaceship> page = new PageImpl<>(spaceshipList);
 
+        PagedModel<EntityModel<Spaceship>> pagedModel = PagedModel.of(
+                Arrays.asList(EntityModel.of(spaceship)),
+                new PagedModel.PageMetadata(10, 0, spaceshipList.size())
+        );
+
         when(service.findAll(pageable)).thenReturn(page);
+        when(pagedResourcesAssembler.toModel(page)).thenReturn(pagedModel);
 
-        Page<Spaceship> result = controller.getAllSpaceships(pageable);
+        ResponseEntity<PagedModel<EntityModel<Spaceship>>> response = controller.getAllSpaceships(pageable);
 
-        assertNotNull(result);
-        assertEquals(1, result.getTotalElements());
-        assertEquals("Enterprise", result.getContent().get(0).getName());
+        assertNotNull(response);
+        assertEquals(200, response.getStatusCode().value());
+        assertNotNull(response.getBody());
+        assertEquals(1, response.getBody().getMetadata().getTotalElements());
+        assertEquals("Enterprise", response.getBody().getContent().iterator().next().getContent().getName());
     }
 
     @Test
-    public void testGetSpaceshipById() throws InvalidIdException {
+    void testGetSpaceshipById() throws InvalidIdException {
         Spaceship spaceship = new Spaceship();
         spaceship.setId(1L);
         spaceship.setName("Enterprise");
@@ -69,7 +83,7 @@ public class SpaceshipControllerTest {
     }
 
     @Test
-    public void testGetSpaceshipByIdInvalid() {
+    void testGetSpaceshipByIdInvalid() {
         ResponseEntity<?> result = controller.getSpaceshipById("abc");
 
         assertNotNull(result);
@@ -77,7 +91,7 @@ public class SpaceshipControllerTest {
     }
 
     @Test
-    public void testGetSpaceshipsByName() {
+    void testGetSpaceshipsByName() {
         Spaceship spaceship = new Spaceship();
         spaceship.setName("Enterprise");
         List<Spaceship> spaceshipList = Arrays.asList(spaceship);
@@ -92,7 +106,7 @@ public class SpaceshipControllerTest {
     }
 
     @Test
-    public void testCreateSpaceship() {
+    void testCreateSpaceship() {
         Spaceship spaceship = new Spaceship();
         spaceship.setName("Enterprise");
 
@@ -106,7 +120,7 @@ public class SpaceshipControllerTest {
     }
 
     @Test
-    public void testCreateSpaceshipDuplicate() {
+    void testCreateSpaceshipDuplicate() {
         Spaceship spaceship = new Spaceship();
         spaceship.setName("Enterprise");
 
@@ -119,7 +133,7 @@ public class SpaceshipControllerTest {
     }
 
     @Test
-    public void testUpdateSpaceship() throws InvalidIdException {
+    void testUpdateSpaceship() throws InvalidIdException {
         Spaceship spaceship = new Spaceship();
         spaceship.setId(1L);
         spaceship.setName("Enterprise");
@@ -135,7 +149,7 @@ public class SpaceshipControllerTest {
     }
 
     @Test
-    public void testUpdateSpaceshipInvalidId() {
+    void testUpdateSpaceshipInvalidId() {
         ResponseEntity<?> result = controller.updateSpaceship("abc", new Spaceship());
 
         assertNotNull(result);
@@ -143,7 +157,7 @@ public class SpaceshipControllerTest {
     }
 
     @Test
-    public void testDeleteSpaceship() throws InvalidIdException {
+    void testDeleteSpaceship() throws InvalidIdException {
         Spaceship spaceship = new Spaceship();
         spaceship.setId(1L);
 
@@ -157,7 +171,7 @@ public class SpaceshipControllerTest {
     }
 
     @Test
-    public void testDeleteSpaceshipInvalidId() {
+    void testDeleteSpaceshipInvalidId() {
         ResponseEntity<?> result = controller.deleteSpaceship("abc");
 
         assertNotNull(result);
@@ -165,7 +179,7 @@ public class SpaceshipControllerTest {
     }
 
     @Test
-    public void testDeleteSpaceshipNotFound() throws InvalidIdException {
+    void testDeleteSpaceshipNotFound() throws InvalidIdException {
         when(service.findById(1L)).thenReturn(Optional.empty());
 
         ResponseEntity<?> result = controller.deleteSpaceship("1");
