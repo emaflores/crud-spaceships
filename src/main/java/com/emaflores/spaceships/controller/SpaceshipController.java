@@ -4,6 +4,7 @@ import com.emaflores.spaceships.entity.Spaceship;
 import com.emaflores.spaceships.exception.DuplicateSpaceshipException;
 import com.emaflores.spaceships.exception.ErrorResponse;
 import com.emaflores.spaceships.exception.InvalidIdException;
+import com.emaflores.spaceships.service.MessageProducerService;
 import com.emaflores.spaceships.service.SpaceshipService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -29,6 +30,9 @@ public class SpaceshipController {
 
     @Autowired
     private PagedResourcesAssembler<Spaceship> pagedResourcesAssembler;
+
+    @Autowired
+    private MessageProducerService messageProducerService;
 
     @GetMapping
     public ResponseEntity<PagedModel<EntityModel<Spaceship>>> getAllSpaceships(Pageable pageable) {
@@ -60,7 +64,9 @@ public class SpaceshipController {
     @PostMapping
     public ResponseEntity<?> createSpaceship(@RequestBody @Valid Spaceship spaceship) {
         try {
-            return new ResponseEntity<>(service.save(spaceship), HttpStatus.CREATED);
+            Spaceship savedSpaceship = service.save(spaceship);
+            messageProducerService.sendMessage("Created spaceship: " + savedSpaceship.getName());
+            return new ResponseEntity<>(savedSpaceship, HttpStatus.CREATED);
         } catch (DuplicateSpaceshipException e) {
             return new ResponseEntity<>(new ErrorResponse(e.getMessage()), HttpStatus.CONFLICT);
         }
@@ -73,7 +79,9 @@ public class SpaceshipController {
             return service.findById(spaceshipId)
                     .map(existing -> {
                         spaceship.setId(spaceshipId);
-                        return ResponseEntity.ok(service.save(spaceship));
+                        Spaceship updatedSpaceship = service.save(spaceship);
+                        messageProducerService.sendMessage("Updated spaceship: " + updatedSpaceship.getName());
+                        return ResponseEntity.ok(updatedSpaceship);
                     })
                     .orElse(ResponseEntity.notFound().build());
         } catch (InvalidIdException e) {
@@ -89,6 +97,7 @@ public class SpaceshipController {
             Long spaceshipId = validateAndConvertId(id);
             if (service.findById(spaceshipId).isPresent()) {
                 service.deleteById(spaceshipId);
+                messageProducerService.sendMessage("Deleted spaceship with ID: " + spaceshipId);
                 return ResponseEntity.noContent().build();
             }
             return ResponseEntity.notFound().build();

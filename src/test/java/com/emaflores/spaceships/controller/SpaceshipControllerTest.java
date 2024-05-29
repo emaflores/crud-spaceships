@@ -3,6 +3,7 @@ package com.emaflores.spaceships.controller;
 import com.emaflores.spaceships.entity.Spaceship;
 import com.emaflores.spaceships.exception.DuplicateSpaceshipException;
 import com.emaflores.spaceships.exception.InvalidIdException;
+import com.emaflores.spaceships.service.MessageProducerService;
 import com.emaflores.spaceships.service.SpaceshipService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -33,6 +34,9 @@ class SpaceshipControllerTest {
 
     @Mock
     private SpaceshipService service;
+
+    @Mock
+    private MessageProducerService messageProducerService;
 
     @Mock
     private PagedResourcesAssembler<Spaceship> pagedResourcesAssembler;
