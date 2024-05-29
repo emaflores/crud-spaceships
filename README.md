@@ -22,7 +22,7 @@ Además, incluye las siguientes características adicionales:
 - Un aspecto para registrar un mensaje cuando se solicita una nave con un ID negativo.
 - Pruebas unitarias y de integración.
 - Uso de Liquibase para el mantenimiento de scripts DDL de la base de datos.
-- - Integración con RabbitMQ para mensajería asíncrona.
+- Integración con RabbitMQ para mensajería asíncrona, con almacenamiento de mensajes en la base de datos.
 
 ## Tecnologías Utilizadas
 
@@ -88,13 +88,30 @@ Para ejecutar RabbitMQ en un contenedor Docker separado, sigue estos pasos:
    docker run -d --name rabbitmq -p 5672:5672 -p 15672:15672 rabbitmq:management
     ```
 2. Accede a la consola de administración de RabbitMQ desde `http://localhost:15672` (usuario: guest, contraseña: guest).
-3. Inicia la aplicación y realiza operaciones CRUD en las naves espaciales.
-4. Verifica que los mensajes se envían y reciben correctamente en la consola de RabbitMQ.
+3. Inicia la aplicación y realiza operaciones de crear, actualizar o eliminar naves espaciales.
+4. Verifica que los mensajes se envían y reciben correctamente en la consola de RabbitMQ. 
 5. Para detener RabbitMQ, ejecuta el siguiente comando:
     ```bash
     docker stop rabbitmq
     ```
     Puedes eliminar el contenedor RabbitMQ ejecutando el comando `docker rm rabbitmq`.
+
+## Almacenamiento de Mensajes de RabbitMQ
+
+Los mensajes recibidos de RabbitMQ se procesan y se almacenan en la base de datos H2 en memoria. Cada mensaje se guarda en la tabla MESSAGE_LOG para mantener un registro de todos los mensajes recibidos.
+
+## Acceso a la Consola de H2
+
+Para acceder a la consola de H2, sigue estos pasos:
+
+1. Accede a `http://localhost:8080/h2-console`.
+2. Ingresa la siguiente información:
+   - **Driver Class:** `org.h2.Driver`
+   - **JDBC URL:** `jdbc:h2:mem:testdb`
+   - **User Name:** `sa`
+   - **Password:** `password`
+3. Haz clic en el botón `Connect`.
+4. Puedes consultar las tablas de la base de datos y ejecutar consultas SQL.
 
 ## Autores
 
