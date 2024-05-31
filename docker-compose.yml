@@ -1,0 +1,36 @@
+services:
+  rabbitmq:
+    image: rabbitmq:management
+    container_name: rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    networks:
+      - app-network
+
+  app:
+    image: spaceships
+    container_name: spaceships
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"
+    depends_on:
+      - rabbitmq
+    networks:
+      - app-network
+
+  h2:
+    image: oscarfonts/h2
+    container_name: h2
+    ports:
+      - "8081:81"
+    environment:
+      - H2_OPTIONS=-tcp -webAllowOthers -tcpAllowOthers -ifNotExists
+    networks:
+      - app-network
+
+networks:
+  app-network:
+    driver: bridge

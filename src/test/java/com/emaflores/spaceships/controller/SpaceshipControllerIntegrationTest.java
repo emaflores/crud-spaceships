@@ -2,14 +2,17 @@ package com.emaflores.spaceships.controller;
 
 import com.emaflores.spaceships.entity.Spaceship;
 import com.emaflores.spaceships.repository.SpaceshipRepository;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
+import org.testcontainers.containers.RabbitMQContainer;
 
 import java.util.Base64;
 
@@ -17,6 +20,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 
 @SpringBootTest
+@ActiveProfiles("test")
 @AutoConfigureMockMvc
 class SpaceshipControllerIntegrationTest {
 
@@ -27,6 +31,19 @@ class SpaceshipControllerIntegrationTest {
     private SpaceshipRepository repository;
 
     private String basicAuthHeader;
+
+    private static RabbitMQContainer rabbitMQContainer;
+
+    @BeforeAll
+    public static void setUpContainer() {
+
+        rabbitMQContainer = new RabbitMQContainer("rabbitmq:3.8-management-alpine")
+                .withExposedPorts(5672, 15672);
+        rabbitMQContainer.start();
+
+        System.setProperty("spring.rabbitmq.host", rabbitMQContainer.getHost());
+        System.setProperty("spring.rabbitmq.port", rabbitMQContainer.getMappedPort(5672).toString());
+    }
 
     @BeforeEach
     public void setUp() {
@@ -154,13 +171,8 @@ class SpaceshipControllerIntegrationTest {
 
     @Test
     void testHandleDataIntegrityViolationException() throws Exception {
-        Spaceship spaceship = new Spaceship();
-        spaceship.setName("Enterprise");
-        spaceship.setType("Explorer");
-        spaceship.setSource("Earth");
-        repository.save(spaceship);
 
-        String invalidSpaceshipJson = "{\"name\":null,\"type\":\"Explorer\",\"source\":\"Earth\"}";
+        String invalidSpaceshipJson = "{\"type\":\"Explorer\",\"source\":\"Earth\"}";
 
         mockMvc.perform(post("/api/spaceships")
                         .header("Authorization", basicAuthHeader)

@@ -61,40 +61,22 @@ Las credenciales de usuario para acceder a la aplicación son las siguientes:
    - **Password:** `adminpassword`
    - **Roles:** `ADMIN`
 
-## Uso con Docker
+## Uso con Docker Compose
 
-1. Tener Docker instalado y funcionando.
+1. Tener Docker y Docker Compose instalados en tu máquina.
 2. Construye la imagen Docker ejecutando el siguiente comando en la raíz del proyecto:
    ```bash
    docker build -t spaceships .
     ```
 3. Ejecuta el contenedor Docker con el siguiente comando:
     ```bash
-    docker run -p 8080:8080 spaceships
+    docker-compose up
     ```
 4. Accede a la documentación de la API desde `http://localhost:8080/swagger-ui/index.html`.
 5. Para detener el contenedor, ejecuta el siguiente comando:
     ```bash
-    docker stop <CONTAINER_ID>
+    docker-compose down
     ```
-    Puedes obtener el CONTAINER_ID ejecutando el comando `docker ps`.
-
-## Configuración de RabbitMQ
-
-Para ejecutar RabbitMQ en un contenedor Docker separado, sigue estos pasos:
-
-1. Inicia RabbitMQ usando Docker:
-   ```bash
-   docker run -d --name rabbitmq -p 5672:5672 -p 15672:15672 rabbitmq:management
-    ```
-2. Accede a la consola de administración de RabbitMQ desde `http://localhost:15672` (usuario: guest, contraseña: guest).
-3. Inicia la aplicación y realiza operaciones de crear, actualizar o eliminar naves espaciales.
-4. Verifica que los mensajes se envían y reciben correctamente en la consola de RabbitMQ. 
-5. Para detener RabbitMQ, ejecuta el siguiente comando:
-    ```bash
-    docker stop rabbitmq
-    ```
-    Puedes eliminar el contenedor RabbitMQ ejecutando el comando `docker rm rabbitmq`.
 
 ## Almacenamiento de Mensajes de RabbitMQ
 
@@ -104,14 +86,28 @@ Los mensajes recibidos de RabbitMQ se procesan y se almacenan en la base de dato
 
 Para acceder a la consola de H2, sigue estos pasos:
 
-1. Accede a `http://localhost:8080/h2-console`.
+1. Accede a `http://localhost:8081/`.
 2. Ingresa la siguiente información:
    - **Driver Class:** `org.h2.Driver`
-   - **JDBC URL:** `jdbc:h2:mem:testdb`
+   - **JDBC URL:** `jdbc:h2:tcp://h2:1521/mem:testdb`
    - **User Name:** `sa`
    - **Password:** `password`
 3. Haz clic en el botón `Connect`.
 4. Puedes consultar las tablas de la base de datos y ejecutar consultas SQL.
+
+## Report de Cobertura de Pruebas con JaCoCo
+
+Se ha configurado el plugin JaCoCo para generar un report de cobertura de pruebas. Para generar el report, ejecuta el siguiente comando en la raíz del proyecto:
+
+```bash
+mvn clean test
+```
+
+El report se generará en la siguiente ruta: `target/site/jacoco/index.html`.
+
+## Uso de Testcontainers para RabbitMQ
+
+Los tests no fallarán debido a la configuración de RabbitMQ, ya que se utiliza Testcontainers para levantar instancias de RabbitMQ durante la ejecución de las pruebas.
 
 ## Autores
 
